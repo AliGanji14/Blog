@@ -6,8 +6,8 @@ from django.shortcuts import render, get_object_or_404
 from django.core.mail import send_mail
 from taggit.models import Tag
 
-from .models import Post, Comment
-from .forms import EmailPostForm, CommentForm
+from .models import Post
+from .forms import EmailPostForm, CommentForm, SearchForm
 
 
 def post_list(request, tag_slug=None):
@@ -73,3 +73,17 @@ def post_comment(request, post_id):
         comment.post = post
         comment.save()
     return render(request, 'blog/comment.html', {'post': post, 'form': form, 'comment': comment})
+
+
+def post_search(request):
+    form = SearchForm()
+    query = None
+    results = []
+
+    if 'query' in request.GET:
+        form = SearchForm(request.GET)
+        if form.is_valid():
+            query = form.cleaned_data['query']
+            results = Post.objects.filter(title__icontains=query) | Post.objects.filter(body__icontains=query)
+    return render(request,
+                  'blog/search.html', {'form': form, 'query': query, 'results': results})
